@@ -35,9 +35,10 @@ def tmva_process(estimator, info, data, target, sample_weight):
 
     file_out = ROOT.TFile(os.path.join(info.directory, info.tmva_root), "RECREATE")
     factory = ROOT.TMVA.Factory(info.tmva_job, file_out, estimator.factory_options)
+    dataloader = ROOT.TMVA.DataLoader("DataLoader")
 
     for var in data.columns:
-        factory.AddVariable(var)
+        dataloader.AddVariable(var)
 
     # Set data
     if info.model_type == 'classification':
@@ -47,20 +48,20 @@ def tmva_process(estimator, info, data, target, sample_weight):
             data = data.ix[inds, :]
             target = target[inds]
             sample_weight = sample_weight[inds]
-        add_classification_events(factory, numpy.array(data), target, weights=sample_weight)
-        add_classification_events(factory, numpy.array(data), target, weights=sample_weight, test=True)
+        add_classification_events(dataloader, numpy.array(data), target, weights=sample_weight)
+        add_classification_events(dataloader, numpy.array(data), target, weights=sample_weight, test=True)
     elif info.model_type == 'regression':
         factory.AddTarget('target')
-        add_regression_events(factory, numpy.array(data), target, weights=sample_weight)
-        add_regression_events(factory, numpy.array(data), target, weights=sample_weight, test=True)
+        add_regression_events(dataloader, numpy.array(data), target, weights=sample_weight)
+        add_regression_events(dataloader, numpy.array(data), target, weights=sample_weight, test=True)
     else:
         raise NotImplementedError("Doesn't support type {}".format(info.model_type))
 
-    factory.PrepareTrainingAndTestTree(ROOT.TCut('1'), "")
+    dataloader.PrepareTrainingAndTestTree(ROOT.TCut('1'), "")
     # Set method
     parameters = ":".join(
         ["{key}={value}".format(key=key, value=value) for key, value in estimator.method_parameters.items()])
-    factory.BookMethod(ROOT.TMVA.Types.__getattribute__(ROOT.TMVA.Types, estimator.method), estimator._method_name,
+    factory.BookMethod(dataloader, ROOT.TMVA.Types.__getattribute__(ROOT.TMVA.Types, estimator.method), estimator._method_name,
                        parameters)
 
     factory.TrainAllMethods()

@@ -150,7 +150,7 @@ class TMVABase(object):
             if stdout is not None:
                 print('%s' % (stdout))
 
-            xml_filename = os.path.join(info.directory, 'weights',
+            xml_filename = os.path.join(info.directory, 'DataLoader/weights',
                                         '{job}_{name}.weights.xml'.format(job=info.tmva_job, name=self._method_name))
             with open(xml_filename, 'r') as xml_file:
                 self.formula_xml = xml_file.read()
